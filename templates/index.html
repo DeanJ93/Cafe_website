@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Add button -->
+    <div class="d-flex justify-content-start mb-4" style="float: left;">
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('add_cafe') }}" class="btn btn-success">Add Cafe</a>
+        {% endif %}
+    </div>
+    <!-- Login Button -->
+    <div class="d-flex justify-content-end mb-4">
+        {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
+        <a href="{{ url_for('register') }}" class="btn btn-secondary ms-2">Register</a>
+        {% else %}
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+        {% endif %}
+    </div>
+
+    <!-- Cafes List -->
+    <h1 class="mb-4">Our Cafes</h1>
+    
+    <div class="row">
+        {% if cafes %}
+            {% for cafe in cafes %}
+                <div class="col-12 col-md-6 col-lg-4 mb-4">
+                    <a href="{{ url_for('get_cafe', cafe_id=cafe.id) }}" class="text-decoration-none text-dark">
+                        <div class="card shadow-sm h-100">
+                            {% if cafe.img_url %}
+                            <div class="card-img-top-wrapper" style="height: 200px; overflow: hidden;">
+                                <img src="{{ cafe.img_url }}" alt="{{ cafe.name }}" class="card-img-top" style="object-fit: cover; height: 100%; width: 100%;">
+                            </div>
+                        {% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ cafe.name }}</h5>
+                            <p class="card-text">
+                                <strong>Location:</strong> {{ cafe.location }}<br>
+                                <strong>Coffee Price:</strong> ${{ cafe.coffee_price }}
+                            </p>
+                            <div class="mt-auto">
+                                {% if cafe.has_wifi %}
+                                    <span class="badge bg-success me-2">WiFi</span>
+                                {% endif %}
+                                {% if cafe.has_sockets %}
+                                    <span class="badge bg-info me-2">Power Outlets</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    </a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info" role="alert">
+                    No cafes found in the database.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
