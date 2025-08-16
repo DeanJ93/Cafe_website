@@ -2,11 +2,24 @@ from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user, logout_user, login_user, login_required, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_mail import Mail, Message
+import secrets
+from datetime import datetime, timedelta
+import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db-cafes.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change this to a secure secret key
+
+# Email configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Update with your SMTP server
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')  # Update with your email
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')  # Update with your email password/app password
+
+mail = Mail(app)
 db = SQLAlchemy(app)
 
 login_manager = LoginManager()
@@ -31,12 +44,26 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(100), nullable=False, unique=True)
     email = db.Column(db.String(100), nullable=False, unique=True)
     password = db.Column(db.String(100), nullable=False)
+    reset_code = db.Column(db.String(8))
+    reset_code_expires = db.Column(db.DateTime)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+        
+    def set_reset_code(self):
+        self.reset_code = ''.join(secrets.choice('0123456789') for _ in range(6))
+        self.reset_code_expires = datetime.utcnow() + timedelta(minutes=15)
+        return self.reset_code
+
+    def verify_reset_code(self, code):
+        if not self.reset_code or not self.reset_code_expires:
+            return False
+        if datetime.utcnow() > self.reset_code_expires:
+            return False
+        return self.reset_code == code
 
 class UserCafes(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -175,6 +202,109 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+@app.route("/reset-password", methods=["GET", "POST"])
+def reset_password_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    if request.method == "POST":
+        email = request.form.get("email")
+        user = User.query.filter_by(email=email).first()
+        
+        if user:
+            reset_code = user.set_reset_code()
+            
+            # Send email with reset code
+            msg = Message('Password Reset Request',
+                        sender=app.config['MAIL_USERNAME'],
+                        recipients=[user.email])
+            msg.body = f'''To reset your password, use this verification code: {reset_code}
+
+If you did not make this request, please ignore this email.
+'''
+            mail.send(msg)
+            
+            db.session.commit()
+            flash('Check your email for the instructions to reset your password')
+            return redirect(url_for('reset_password_verify', token=secrets.token_urlsafe(32)))
+        
+        flash('Email address not found')
+        return redirect(url_for('reset_password_request'))
+    
+    return render_template('reset-password.html', token=None)
+
+@app.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password_verify(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    if request.method == "POST":
+        code = request.form.get("code")
+        new_password = request.form.get("new_password")
+        confirm_password = request.form.get("confirm_password")
+        
+        if len(new_password) < 6:
+            flash("Password must be at least 6 characters long.")
+            return redirect(url_for('reset_password_verify', token=token))
+        
+        if new_password != confirm_password:
+            flash("Passwords do not match.")
+            return redirect(url_for('reset_password_verify', token=token))
+        
+        user = User.query.filter_by(reset_code=code).first()
+        if user and user.verify_reset_code(code):
+            user.set_password(new_password)
+            user.reset_code = None
+            user.reset_code_expires = None
+            db.session.commit()
+            flash('Your password has been reset.')
+            return redirect(url_for('login'))
+        
+        flash('Invalid or expired reset code')
+        return redirect(url_for('reset_password_verify', token=token))
+    
+    return render_template('reset-password.html', token=token)
+
+@app.route("/my-account", methods=["GET", "POST"])
+@login_required
+def my_account():
+    if request.method == "POST":
+        email = request.form.get("email")
+        current_password = request.form.get("current_password")
+        new_password = request.form.get("new_password")
+        confirm_password = request.form.get("confirm_password")
+
+        # Verify current password
+        if not current_user.check_password(current_password):
+            flash("Current password is incorrect.")
+            return redirect(url_for("my_account"))
+
+        # Check if email already exists
+        if email != current_user.email and User.query.filter_by(email=email).first():
+            flash("Email address already in use.")
+            return redirect(url_for("my_account"))
+
+        # Update email
+        current_user.email = email
+
+        # Update password if provided
+        if new_password:
+            if len(new_password) < 6:
+                flash("New password must be at least 6 characters long.")
+                return redirect(url_for("my_account"))
+            
+            if new_password != confirm_password:
+                flash("New passwords do not match.")
+                return redirect(url_for("my_account"))
+            
+            current_user.set_password(new_password)
+
+        db.session.commit()
+        flash("Account updated successfully.")
+        return redirect(url_for("my_account"))
+
+    return render_template("my-account.html")
 
 if __name__ == "__main__":
     app.run(debug=True)

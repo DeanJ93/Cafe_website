@@ -3,18 +3,9 @@
 {% block content %}
 <div class="container mt-4">
     <!-- Add button -->
-    <div class="d-flex justify-content-start mb-4" style="float: left;">
+    <div class="d-flex justify-content-start mb-4">
         {% if current_user.is_authenticated %}
         <a href="{{ url_for('add_cafe') }}" class="btn btn-success">Add Cafe</a>
-        {% endif %}
-    </div>
-    <!-- Login Button -->
-    <div class="d-flex justify-content-end mb-4">
-        {% if not current_user.is_authenticated %}
-        <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
-        <a href="{{ url_for('register') }}" class="btn btn-secondary ms-2">Register</a>
-        {% else %}
-        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
         {% endif %}
     </div>
 
