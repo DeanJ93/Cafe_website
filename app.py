@@ -1,11 +1,14 @@
+import time
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user, logout_user, login_user, login_required, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
 import secrets
-from datetime import datetime, timedelta
-import os
+from datetime import datetime, timedelta, timezone
+import dotenv
+
+dotenv.load_dotenv()
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db-cafes.db'
@@ -16,8 +19,8 @@ app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change this to a secure sec
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Update with your SMTP server
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')  # Update with your email
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')  # Update with your email password/app password
+app.config['MAIL_USERNAME'] = dotenv.get_key(".env", "mail_username")  # Update with your email
+app.config['MAIL_PASSWORD'] = dotenv.get_key(".env", "mail_password")  # Update with your email password/app password
 
 mail = Mail(app)
 db = SQLAlchemy(app)
@@ -38,6 +41,8 @@ class Cafe(db.Model):
     seats = db.Column(db.String(10))
     coffee_price = db.Column(db.String, nullable=False)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    time_created = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    last_updated = db.Column(db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -46,6 +51,8 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(100), nullable=False)
     reset_code = db.Column(db.String(8))
     reset_code_expires = db.Column(db.DateTime)
+    time_created = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    last_updated = db.Column(db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -55,13 +62,13 @@ class User(UserMixin, db.Model):
         
     def set_reset_code(self):
         self.reset_code = ''.join(secrets.choice('0123456789') for _ in range(6))
-        self.reset_code_expires = datetime.utcnow() + timedelta(minutes=15)
+        self.reset_code_expires = datetime.now(timezone.utc) + timedelta(minutes=15)
         return self.reset_code
 
     def verify_reset_code(self, code):
         if not self.reset_code or not self.reset_code_expires:
             return False
-        if datetime.utcnow() > self.reset_code_expires:
+        if datetime.now(timezone.utc) > (self.reset_code_expires.replace(tzinfo=timezone.utc) if self.reset_code_expires else datetime.now(timezone.utc)):
             return False
         return self.reset_code == code
 
@@ -102,7 +109,8 @@ def add_cafe():
             can_take_calls=bool(request.form.get("can_take_calls")),
             seats=request.form.get("seats"),
             coffee_price=request.form.get("coffee_price"),
-            created_by=current_user.id
+            created_by=current_user.id,
+            time_created=datetime.now(timezone.utc)
         )
         db.session.add(new_cafe)
         db.session.commit()
@@ -129,7 +137,8 @@ def edit_cafe(cafe_id):
         cafe.can_take_calls = bool(request.form.get("can_take_calls"))
         cafe.seats = request.form.get("seats")
         cafe.coffee_price = request.form.get("coffee_price")
-        
+        cafe.last_updated = datetime.now(timezone.utc)
+
         db.session.commit()
         flash("Cafe updated successfully!")
         return redirect(url_for("get_cafe", cafe_id=cafe.id))
@@ -173,7 +182,7 @@ def register():
             flash("Password must be at least 6 characters long.")
             return render_template("register.html")
 
-        new_user = User(username=username, email=email)
+        new_user = User(username=username, email=email, time_created=datetime.now(timezone.utc))
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
@@ -257,6 +266,7 @@ def reset_password_verify(token):
             user.set_password(new_password)
             user.reset_code = None
             user.reset_code_expires = None
+            user.last_updated = datetime.now(timezone.utc)
             db.session.commit()
             flash('Your password has been reset.')
             return redirect(url_for('login'))
@@ -300,6 +310,7 @@ def my_account():
             
             current_user.set_password(new_password)
 
+        current_user.last_updated = datetime.now(timezone.utc)
         db.session.commit()
         flash("Account updated successfully.")
         return redirect(url_for("my_account"))
