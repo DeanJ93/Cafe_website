@@ -1,4 +1,3 @@
-import time
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user, logout_user, login_user, login_required, UserMixin
@@ -71,12 +70,7 @@ class User(UserMixin, db.Model):
         if datetime.now(timezone.utc) > (self.reset_code_expires.replace(tzinfo=timezone.utc) if self.reset_code_expires else datetime.now(timezone.utc)):
             return False
         return self.reset_code == code
-
-class UserCafes(db.Model):
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    cafe_id = db.Column(db.Integer, db.ForeignKey('cafe.id'))
-
+    
 with app.app_context():
     db.create_all()
 
@@ -161,8 +155,8 @@ def delete_cafe(cafe_id):
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form.get("username")
-        email = request.form.get("email")
+        username = request.form.get("username").lower()
+        email = request.form.get("email").lower()
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
 
@@ -194,7 +188,7 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
+        username = request.form.get('username').lower()
         password = request.form.get('password')
         user = User.query.filter_by(username=username).first()
         
