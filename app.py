@@ -10,7 +10,7 @@ import dotenv
 dotenv.load_dotenv()
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db-cafes.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = dotenv.get_key(".env", "db_uri")  # Update with your database URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = dotenv.get_key(".env", "secret_key")  # Change this to a secure secret key
 
