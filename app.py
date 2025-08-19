@@ -12,7 +12,7 @@ dotenv.load_dotenv()
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db-cafes.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change this to a secure secret key
+app.config['SECRET_KEY'] = dotenv.get_key(".env", "secret_key")  # Change this to a secure secret key
 
 # Email configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Update with your SMTP server
