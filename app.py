@@ -11,16 +11,16 @@ import os
 dotenv.load_dotenv()
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = dotenv.get_key(".env", "db_uri", default=os.environ.get("db_uri"))  # Update with your database URL
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("db_uri")  # Update with your database URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = dotenv.get_key(".env", "secret_key", default=os.environ.get("secret_key"))  # Change this to a secure secret key
+app.config['SECRET_KEY'] = os.environ.get("secret_key")  # Change this to a secure secret key
 
 # Email configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Update with your SMTP server
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = dotenv.get_key(".env", "mail_username", default=os.environ.get("mail_username"))  # Update with your email
-app.config['MAIL_PASSWORD'] = dotenv.get_key(".env", "mail_password", default=os.environ.get("mail_password"))  # Update with your email password/app password
+app.config['MAIL_USERNAME'] = os.environ.get("mail_username") # Update with your email
+app.config['MAIL_PASSWORD'] = os.environ.get("mail_password") # Update with your email password/app password
 
 mail = Mail(app)
 db = SQLAlchemy(app)
