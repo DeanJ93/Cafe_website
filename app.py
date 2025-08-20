@@ -48,7 +48,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(100), nullable=False, unique=True)
     email = db.Column(db.String(100), nullable=False, unique=True)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(512), nullable=False)
     reset_code = db.Column(db.String(8))
     reset_code_expires = db.Column(db.DateTime)
     time_created = db.Column(db.DateTime, default=datetime.now(timezone.utc))
