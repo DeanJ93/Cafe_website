@@ -5,13 +5,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
 import secrets
 from datetime import datetime, timedelta, timezone
-import dotenv
 import os
 
-dotenv.load_dotenv()
-
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("db_uri")  # Update with your database URL
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("db_uri", "sqlite:///db-cafes.db")  # Update with your database URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get("secret_key")  # Change this to a secure secret key
 
