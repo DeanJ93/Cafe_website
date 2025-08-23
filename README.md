@@ -2,7 +2,7 @@
 
 A Flask-based web application for discovering and sharing information about cafes. Users can browse cafes, view their amenities, and contribute new cafe listings to the database.
 
-![Screenshot of Cafe Website](Screenshot%202025-08-23%20203653.png)
+![Screenshot of Cafe Website](landing-page.png)
 
 ## Features
 
