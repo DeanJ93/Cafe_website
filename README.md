@@ -18,15 +18,15 @@ A Flask-based web application for discovering and sharing information about cafe
 
 ## Tech Stack
 
-- **Backend**: Python Flask
-- **Database**: SQLite with SQLAlchemy ORM
-- **Authentication**: Flask-Login
-- **Email Service**: Flask-Mail
-- **Frontend**: HTML, CSS, Jinja2 Templates
+- **Backend**: Python Flask 3.1.x
+- **Database**: SQLite with SQLAlchemy ORM 3.1.x
+- **Authentication**: Flask-Login 0.6.x
+- **Email Service**: Flask-Mail 0.10.x
+- **Frontend**: HTML, CSS, Jinja2 3.1.x Templates
 
 ## Prerequisites
 
-- Python 3.x
+- Python 3.13.x
 - pip (Python package manager)
 
 ## Installation
@@ -53,13 +53,6 @@ Create a `.env` file in the root directory with the following variables:
 ```
 mail_username=your_email@gmail.com
 mail_password=your_email_app_password
-```
-
-5. Initialize the database:
-```bash
-flask db init
-flask db migrate
-flask db upgrade
 ```
 
 ## Running the Application
@@ -91,14 +84,6 @@ python app.py
     ├── register.html   # Registration page
     └── reset-password.html # Password reset page
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/YourFeature`)
-3. Commit your changes (`git commit -m 'Add some feature'`)
-4. Push to the branch (`git push origin feature/YourFeature`)
-5. Open a Pull Request
 
 ## License
 
