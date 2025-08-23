@@ -1,3 +1,16 @@
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+.content {
+    flex: 1;
+}
+.footer {
+    margin-top: auto;
+    padding: 1rem 0;
+    background-color: #f8f9fa;
+}
 .cafe-detail {
     padding: 2rem 0;
 }
@@ -59,4 +72,15 @@
 
 a {
     padding-left: 10px;
+}
+
+.card-img-div {
+    height: 200px;
+    overflow: hidden
+}
+
+.card-img {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
 }
