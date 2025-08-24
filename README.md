@@ -66,6 +66,13 @@ secret_key=your_secret_key
 python app.py
 ```
 
+## Populating the database
+You can populate.py in the scripts folder to add fake data to the database.
+
+```bash
+python scripts/populate_db.py
+```
+
 2. Open your web browser and navigate to `http://localhost:5000`
 
 ## License
