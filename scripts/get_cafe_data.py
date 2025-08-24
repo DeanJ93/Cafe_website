@@ -19,5 +19,17 @@ def generate_fake_cafe():
         "time_created": fake.date_time_this_year()
     }
 
-# for cafe in cafes:
-#     print(cafe[0])
+def generate_fake_review(cafe_id: int, user_id: int):
+    return {
+        "rating": random.randint(1, 5),
+        "content": fake.sentence(nb_words=15),
+        "cafe_id": cafe_id,
+        "user_id": user_id
+    }
+
+def generate_fake_user():
+    return {
+        "username": fake.user_name(),
+        "email": fake.email(),
+        "password": fake.password(length=8)
+    }
