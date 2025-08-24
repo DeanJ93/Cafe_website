@@ -15,6 +15,7 @@ A Flask-based web application for discovering and sharing information about cafe
   - Seating capacity
   - Coffee prices
   - Whether calls can be taken
+- adding, editing and deleting cafe reviews
 - User account management
 - Email notifications for password reset
 
@@ -51,10 +52,11 @@ pip install -r requirements.txt
 ```
 
 4. Set up environment variables:
-Create a `.env` file in the root directory with the following variables:
+Create the following emvrironment variables:
 ```
 mail_username=your_email@gmail.com
 mail_password=your_email_app_password
+secret_key=your_secret_key
 ```
 
 ## Running the Application
@@ -65,27 +67,6 @@ python app.py
 ```
 
 2. Open your web browser and navigate to `http://localhost:5000`
-
-## Project Structure
-
-```
-├── app.py                 # Main application file
-├── requirements.txt       # Python dependencies
-├── instance/             # Database directory
-│   └── db-cafes.db      # SQLite database
-├── static/              # Static files
-│   └── css/
-│       └── styles.css   # CSS styles
-└── templates/           # HTML templates
-    ├── base.html       # Base template
-    ├── cafe-form.html  # Cafe submission form
-    ├── cafe.html       # Cafe details page
-    ├── index.html      # Home page
-    ├── login.html      # Login page
-    ├── my-account.html # User account page
-    ├── register.html   # Registration page
-    └── reset-password.html # Password reset page
-```
 
 ## License
 
