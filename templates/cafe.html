@@ -77,5 +77,87 @@
             </iframe>
         </div>
     </div>
+
+        <div class="row mt-5">
+            <div class="col-12">
+                <h3>Reviews</h3>
+                {% if reviews and reviews|length > 0 %}
+                <ul class="list-group mb-4">
+                    {% for review in reviews %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ review[1] or 'Anonymous' }}</strong>
+                                <span class="text-muted small">{{ review[0].time_created.strftime('%Y-%m-%d') if review[0].time_created else '' }}</span>
+                            </div>
+                            <div>
+                                {% for i in range(review[0].rating) %}
+                                    <i class="bi bi-star-fill"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gold" class="bi bi-star-fill" viewBox="0 0 16 16">
+  <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+</svg></i>
+                                {% endfor %}
+                                {% for i in range(5 - review[0].rating) %}
+                                    <i class="bi bi-star"></i>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <p class="mb-1 mt-2">{{ review[0].content }}</p>
+                        {% if current_user.is_authenticated and current_user.id == review[0].user_id %}
+                        <a class="review-button" onclick="showEditReviewForm('{{ review[0].id }}')">Edit</a>
+                        <a id="delete-review"href="{{ url_for('delete_review', review_id=review[0].id) }}" 
+                            class="review-button" 
+                            onclick="return confirm('Are you sure you want to delete this review?')">
+                                Delete
+                            </a>
+                        <form id="review-form-{{ review[0].id }}" class="d-none" method="POST" action="{{ url_for('edit_review', review_id=review[0].id) }}">
+                            <div class="mb-3">
+                                <label for="rating-{{ review[0].id }}" class="form-label">Rating</label>
+                                <select class="form-select" id="rating-{{ review[0].id }}" name="rating" required>
+                                    <option value="">Select rating</option>
+                                    {% for i in range(1, 6) %}
+                                    <option value="{{ i }}" {% if review[0].rating == i %}selected{% endif %}>{{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <textarea class="form-control" id="content-{{ review[0].id }}" name="content" rows="3" required>{{ review[0].content }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Review</button>
+                        </form>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted">No reviews yet. Be the first to review this cafe!</p>
+                {% endif %}
+
+                {% if current_user.is_authenticated %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Leave a Review</h5>
+                        <form method="POST" action="{{ url_for('add_review', cafe_id=cafe.id) }}">
+                            <div class="mb-3">
+                                <label for="rating" class="form-label">Rating</label>
+                                <select class="form-select" id="rating" name="rating" required>
+                                    <option value="">Select rating</option>
+                                    {% for i in range(1, 6) %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="content" class="form-label">Review</label>
+                                <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">Submit Review</button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <p><a href="{{ url_for('login') }}">Log in</a> to leave a review.</p>
+                {% endif %}
+            </div>
+        </div>
 </div>
 {% endblock %}

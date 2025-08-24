@@ -52,6 +52,8 @@ class User(UserMixin, db.Model):
     last_updated = db.Column(db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
     def set_password(self, password):
+        if len(password) < 6:
+            raise ValueError("Password must be at least 6 characters long.")
         self.password = generate_password_hash(password)
 
     def check_password(self, password):
@@ -69,6 +71,15 @@ class User(UserMixin, db.Model):
             return False
         return self.reset_code == code
     
+class Review(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    cafe_id = db.Column(db.Integer, db.ForeignKey('cafe.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    time_created = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    time_updated = db.Column(db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+    
 with app.app_context():
     db.create_all()
 
@@ -79,12 +90,21 @@ def load_user(user_id):
 @app.route("/")
 def index():
     cafes = Cafe.query.all()
-    return render_template("index.html", cafes=cafes)
+    return render_template("index.html", cafes=cafes, heading="Our Cafes")
 
 @app.route("/<int:cafe_id>")
 def get_cafe(cafe_id):
     cafe = Cafe.query.get_or_404(cafe_id)
-    return render_template("cafe.html", cafe=cafe)
+    # returns a list of tuples as (Review, User.username)
+    reviews = db.session.query(Review, User.username).join(User, Review.user_id == User.id).filter(Review.cafe_id == cafe.id).all()
+    print(reviews)
+    return render_template("cafe.html", cafe=cafe, reviews=reviews)
+
+@app.route("/my-cafes")
+@login_required
+def my_cafes():
+    cafes = Cafe.query.filter_by(created_by=current_user.id).all()
+    return render_template("index.html", cafes=cafes, heading="My Cafes")
 
 @app.route("/add", methods=["GET", "POST"])
 @login_required
@@ -149,6 +169,57 @@ def delete_cafe(cafe_id):
     db.session.commit()
     flash("Cafe deleted successfully!")
     return redirect(url_for("index"))
+
+@app.route("/add-review/<int:cafe_id>", methods=["GET", "POST"])
+@login_required
+def add_review(cafe_id):
+    cafe = Cafe.query.get_or_404(cafe_id)
+    if request.method == "POST":
+        new_review = Review(
+            cafe_id=cafe.id,
+            user_id=current_user.id,
+            content=request.form.get("content"),
+            rating=int(request.form.get("rating")),
+            time_created=datetime.now(timezone.utc)
+        )
+        db.session.add(new_review)
+        db.session.commit()
+        flash("Review added successfully!")
+        return redirect(url_for("get_cafe", cafe_id=cafe.id))
+    
+    return render_template("review-form.html", cafe=cafe)
+
+@app.route("/delete-review/<int:review_id>", methods=["GET","POST"])
+@login_required
+def delete_review(review_id):
+    review = Review.query.get_or_404(review_id)
+    if review.user_id != current_user.id:
+        flash("You can only delete your own reviews.")
+        return redirect(url_for("get_cafe", cafe_id=review.cafe_id))
+    
+    db.session.delete(review)
+    db.session.commit()
+    flash("Review deleted successfully!")
+    return redirect(url_for("get_cafe", cafe_id=review.cafe_id))
+
+@app.route("/edit-review/<int:review_id>", methods=["GET", "POST"])
+@login_required
+def edit_review(review_id):
+    review = Review.query.get_or_404(review_id)
+    if review.user_id != current_user.id:
+        flash("You can only edit your own reviews.")
+        return redirect(url_for("get_cafe", cafe_id=review.cafe_id))
+    
+    if request.method == "POST":
+        review.content = request.form.get("content")
+        review.rating = int(request.form.get("rating")) if request.form.get("rating") else review.rating
+        review.time_updated = datetime.now(timezone.utc)
+
+        db.session.commit()
+        flash("Review updated successfully!")
+        return redirect(url_for("get_cafe", cafe_id=review.cafe_id))
+    
+    return render_template("review-form.html", review=review)
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
