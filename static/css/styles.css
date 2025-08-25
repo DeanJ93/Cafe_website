@@ -90,11 +90,12 @@ a {
     margin-left: 0;
     margin-right: 1rem;
     padding: 0;
-    &:hover {
-        text-decoration: underline;
-        cursor: pointer;
-    }
     font-size: 0.9rem;
+}
+
+.review-button:hover {
+    text-decoration: underline;
+    cursor: pointer;
 }
 .d-none {
     display: none;
