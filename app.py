@@ -161,11 +161,11 @@ def edit_cafe(cafe_id):
 @login_required
 def delete_cafe(cafe_id):
     cafe = Cafe.query.get_or_404(cafe_id)
-    reviews = Review.query.filter_by(cafe_id=cafe.id).all()
     if cafe.created_by != current_user.id:
         flash("You can only delete cafes that you've added.")
         return redirect(url_for("index"))
     
+    reviews = Review.query.filter_by(cafe_id=cafe.id).all()
     for review in reviews:
         db.session.delete(review)
     db.session.delete(cafe)
