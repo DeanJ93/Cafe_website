@@ -165,6 +165,9 @@ def delete_cafe(cafe_id):
         flash("You can only delete cafes that you've added.")
         return redirect(url_for("index"))
     
+    reviews = Review.query.filter_by(cafe_id=cafe.id).all()
+    for review in reviews:
+        db.session.delete(review)
     db.session.delete(cafe)
     db.session.commit()
     flash("Cafe deleted successfully!")
