@@ -165,13 +165,23 @@ def delete_cafe(cafe_id):
         flash("You can only delete cafes that you've added.")
         return redirect(url_for("index"))
     
-    reviews = Review.query.filter_by(cafe_id=cafe.id).all()
-    for review in reviews:
-        db.session.delete(review)
-    db.session.delete(cafe)
-    db.session.commit()
-    flash("Cafe deleted successfully!")
-    return redirect(url_for("index"))
+    try:
+        # Start a transaction
+        db.session.begin_nested()
+        
+        # First delete all reviews associated with the cafe
+        Review.query.filter_by(cafe_id=cafe.id).delete()
+        # Then delete the cafe
+        db.session.delete(cafe)
+        
+        # Commit both operations
+        db.session.commit()
+        flash("Cafe deleted successfully!")
+        return redirect(url_for("index"))
+    except Exception as e:
+        db.session.rollback()
+        flash("An error occurred while deleting the cafe.")
+        return redirect(url_for("index"))
 
 @app.route("/add-review/<int:cafe_id>", methods=["GET", "POST"])
 @login_required
